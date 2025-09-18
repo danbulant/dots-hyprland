@@ -14,14 +14,14 @@ import Quickshell.Hyprland
  */
 Singleton {
     id: root
-    property string keybindParserPath: FileUtils.trimFileProtocol(`${Directories.scriptPath}/hyprland/get_keybinds.py`)
-    property string defaultKeybindConfigPath: FileUtils.trimFileProtocol(`${Directories.config}/hypr/hyprland/keybinds.conf`)
-    property string userKeybindConfigPath: FileUtils.trimFileProtocol(`${Directories.config}/hypr/custom/keybinds.conf`)
-    property var defaultKeybinds: {"children": []}
+    property string keybindParserPath: FileUtils.trimFileProtocol(`${Directories.config}/quickshell/scripts/hyprland/get_keybinds.py`)
+    // property string defaultKeybindConfigPath: FileUtils.trimFileProtocol(`${Directories.config}/hypr/hyprland/keybinds.conf`)
+    property string userKeybindConfigPath: FileUtils.trimFileProtocol(`${Directories.config}/hypr/hyprland.conf`)
+    // property var defaultKeybinds: {"children": []}
     property var userKeybinds: {"children": []}
     property var keybinds: ({
         children: [
-            ...(defaultKeybinds.children ?? []),
+            // ...(defaultKeybinds.children ?? []),
             ...(userKeybinds.children ?? []),
         ]
     })
@@ -31,32 +31,32 @@ Singleton {
 
         function onRawEvent(event) {
             if (event.name == "configreloaded") {
-                getDefaultKeybinds.running = true
+                // getDefaultKeybinds.running = true
                 getUserKeybinds.running = true
             }
         }
     }
 
-    Process {
-        id: getDefaultKeybinds
-        running: true
-        command: [root.keybindParserPath, "--path", root.defaultKeybindConfigPath]
+    // Process {
+    //     id: getDefaultKeybinds
+    //     running: true
+    //     command: [root.keybindParserPath, "--path", root.defaultKeybindConfigPath]
         
-        stdout: SplitParser {
-            onRead: data => {
-                try {
-                    root.defaultKeybinds = JSON.parse(data)
-                } catch (e) {
-                    console.error("[CheatsheetKeybinds] Error parsing keybinds:", e)
-                }
-            }
-        }
-    }
+    //     stdout: SplitParser {
+    //         onRead: data => {
+    //             try {
+    //                 root.defaultKeybinds = JSON.parse(data)
+    //             } catch (e) {
+    //                 console.error("[CheatsheetKeybinds] Error parsing keybinds:", e)
+    //             }
+    //         }
+    //     }
+    // }
 
     Process {
         id: getUserKeybinds
         running: true
-        command: [root.keybindParserPath, "--path", root.userKeybindConfigPath]
+        command: ["python3", root.keybindParserPath, "--path", root.userKeybindConfigPath]
         
         stdout: SplitParser {
             onRead: data => {

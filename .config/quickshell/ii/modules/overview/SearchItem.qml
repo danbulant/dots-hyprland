@@ -90,7 +90,7 @@ RippleButton {
     }
 
     onClicked: {
-        GlobalStates.overviewOpen = false
+        GlobalStates.overviewSearchOpen = false
         root.itemExecute()
     }
     Keys.onPressed: (event) => {

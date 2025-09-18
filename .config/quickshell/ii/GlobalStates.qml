@@ -16,7 +16,8 @@ Singleton {
     property bool osdBrightnessOpen: false
     property bool osdVolumeOpen: false
     property bool oskOpen: false
-    property bool overviewOpen: false
+    property bool overviewWindowsOpen: false
+    property bool overviewSearchOpen: false
     property bool wallpaperSelectorOpen: false
     property bool screenLocked: false
     property bool screenLockContainsCharacters: false
@@ -25,6 +26,7 @@ Singleton {
     property bool superDown: false
     property bool superReleaseMightTrigger: true
     property bool workspaceShowNumbers: false
+    property bool dontAutoCancelSearch: false
 
     property real screenZoom: 1
     onScreenZoomChanged: {

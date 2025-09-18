@@ -25,7 +25,7 @@ Item {
         "Slash": "/",
         "Hash": "#",
         "Return": "Enter",
-        // "Shift": "",
+        "Shift": "",
     })
 
     RowLayout { // Keybind columns

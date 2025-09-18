@@ -12,18 +12,21 @@ import Quickshell.Hyprland
 
 Scope {
     id: overviewScope
-    property bool dontAutoCancelSearch: false
+
+    OverviewSearch {
+        id: searchPanel
+    }
+
     Variants {
         id: overviewVariants
         model: Quickshell.screens
         PanelWindow {
             id: root
             required property var modelData
-            property string searchingText: ""
             readonly property HyprlandMonitor monitor: Hyprland.monitorFor(root.screen)
             property bool monitorIsFocused: (Hyprland.focusedMonitor?.id == monitor?.id)
             screen: modelData
-            visible: GlobalStates.overviewOpen
+            visible: GlobalStates.overviewWindowsOpen
 
             WlrLayershell.namespace: "quickshell:overview"
             WlrLayershell.layer: WlrLayer.Overlay
@@ -31,10 +34,10 @@ Scope {
             color: "transparent"
 
             mask: Region {
-                item: GlobalStates.overviewOpen ? columnLayout : null
+                item: GlobalStates.overviewWindowsOpen ? columnLayout : null
             }
             // HyprlandWindow.visibleMask: Region { // Buggy with scaled monitors
-            //     item: GlobalStates.overviewOpen ? columnLayout : null
+            //     item: GlobalStates.overviewWindowsOpen ? columnLayout : null
             // }
 
             anchors {
@@ -48,24 +51,16 @@ Scope {
                 id: grab
                 windows: [root]
                 property bool canBeActive: root.monitorIsFocused
-                active: false
                 onCleared: () => {
-                    if (!active)
-                        GlobalStates.overviewOpen = false;
+                    if (!active) GlobalStates.overviewWindowsOpen = false
                 }
             }
 
             Connections {
                 target: GlobalStates
-                function onOverviewOpenChanged() {
-                    if (!GlobalStates.overviewOpen) {
-                        searchWidget.disableExpandAnimation();
-                        overviewScope.dontAutoCancelSearch = false;
-                    } else {
-                        if (!overviewScope.dontAutoCancelSearch) {
-                            searchWidget.cancelSearch();
-                        }
-                        delayedGrabTimer.start();
+                function onOverviewWindowsOpenChanged() {
+                    if (GlobalStates.overviewWindowsOpen)  {
+                        delayedGrabTimer.start()
                     }
                 }
             }
@@ -77,7 +72,7 @@ Scope {
                 onTriggered: {
                     if (!grab.canBeActive)
                         return;
-                    grab.active = GlobalStates.overviewOpen;
+                    grab.active = GlobalStates.overviewWindowsOpen;
                 }
             }
 
@@ -91,7 +86,7 @@ Scope {
 
             ColumnLayout {
                 id: columnLayout
-                visible: GlobalStates.overviewOpen
+                visible: GlobalStates.overviewWindowsOpen
                 anchors {
                     horizontalCenter: parent.horizontalCenter
                     top: parent.top
@@ -99,7 +94,7 @@ Scope {
 
                 Keys.onPressed: event => {
                     if (event.key === Qt.Key_Escape) {
-                        GlobalStates.overviewOpen = false;
+                        GlobalStates.overviewWindowsOpen = false;
                     } else if (event.key === Qt.Key_Left) {
                         if (!root.searchingText)
                             Hyprland.dispatch("workspace r-1");
@@ -119,10 +114,10 @@ Scope {
 
                 Loader {
                     id: overviewLoader
-                    active: GlobalStates.overviewOpen && (Config?.options.overview.enable ?? true)
+                    active: GlobalStates.overviewWindowsOpen && (Config?.options.overview.enable ?? true)
                     sourceComponent: OverviewWidget {
                         panelWindow: root
-                        visible: (root.searchingText == "")
+                        visible: true
                     }
                 }
             }
@@ -130,63 +125,70 @@ Scope {
     }
 
     function toggleClipboard() {
-        if (GlobalStates.overviewOpen && overviewScope.dontAutoCancelSearch) {
-            GlobalStates.overviewOpen = false;
-            return;
-        }
-        for (let i = 0; i < overviewVariants.instances.length; i++) {
-            let panelWindow = overviewVariants.instances[i];
-            if (panelWindow.modelData.name == Hyprland.focusedMonitor.name) {
-                overviewScope.dontAutoCancelSearch = true;
-                panelWindow.setSearchingText(Config.options.search.prefix.clipboard);
-                GlobalStates.overviewOpen = true;
-                return;
-            }
-        }
+    //     if (GlobalStates.overviewOpen && overviewScope.dontAutoCancelSearch) {
+    //         GlobalStates.overviewOpen = false;
+    //         return;
+    //     }
+    //     for (let i = 0; i < overviewVariants.instances.length; i++) {
+    //         let panelWindow = overviewVariants.instances[i];
+    //         if (panelWindow.modelData.name == Hyprland.focusedMonitor.name) {
+    //             overviewScope.dontAutoCancelSearch = true;
+    //             panelWindow.setSearchingText(Config.options.search.prefix.clipboard);
+    //             GlobalStates.overviewOpen = true;
+    //             return;
+    //         }
+    //     }
     }
 
     function toggleEmojis() {
-        if (GlobalStates.overviewOpen && overviewScope.dontAutoCancelSearch) {
-            GlobalStates.overviewOpen = false;
-            return;
-        }
-        for (let i = 0; i < overviewVariants.instances.length; i++) {
-            let panelWindow = overviewVariants.instances[i];
-            if (panelWindow.modelData.name == Hyprland.focusedMonitor.name) {
-                overviewScope.dontAutoCancelSearch = true;
-                panelWindow.setSearchingText(Config.options.search.prefix.emojis);
-                GlobalStates.overviewOpen = true;
-                return;
-            }
-        }
+        // if (GlobalStates.overviewOpen && overviewScope.dontAutoCancelSearch) {
+        //     GlobalStates.overviewOpen = false;
+        //     return;
+        // }
+        // for (let i = 0; i < overviewVariants.instances.length; i++) {
+        //     let panelWindow = overviewVariants.instances[i];
+        //     if (panelWindow.modelData.name == Hyprland.focusedMonitor.name) {
+        //         overviewScope.dontAutoCancelSearch = true;
+        //         panelWindow.setSearchingText(Config.options.search.prefix.emojis);
+        //         GlobalStates.overviewOpen = true;
+        //         return;
+        //     }
+        // }
     }
 
     IpcHandler {
         target: "overview"
 
-        function toggle() {
-            GlobalStates.overviewOpen = !GlobalStates.overviewOpen;
-        }
-        function close() {
-            GlobalStates.overviewOpen = false;
-        }
-        function open() {
-            GlobalStates.overviewOpen = true;
-        }
-        function toggleReleaseInterrupt() {
-            GlobalStates.superReleaseMightTrigger = false;
-        }
+        // function toggle() {
+        //     GlobalStates.overviewOpen = !GlobalStates.overviewOpen;
+        // }
+        // function close() {
+        //     GlobalStates.overviewOpen = false;
+        // }
+        // function open() {
+        //     GlobalStates.overviewOpen = true;
+        // }
+        // function toggleReleaseInterrupt() {
+        //     GlobalStates.superReleaseMightTrigger = false;
+        // }
         function clipboardToggle() {
             overviewScope.toggleClipboard();
         }
     }
+    GlobalShortcut {
+        name: "overviewSearchToggle"
+        description: qsTr("Toggles overview on press")
 
+        onPressed: {
+            GlobalStates.overviewSearchOpen = !GlobalStates.overviewSearchOpen
+        }
+    }
     GlobalShortcut {
         name: "overviewToggle"
         description: "Toggles overview on press"
 
         onPressed: {
-            GlobalStates.overviewOpen = !GlobalStates.overviewOpen;
+            GlobalStates.overviewWindowsOpen = !GlobalStates.overviewWindowsOpen;
         }
     }
     GlobalShortcut {
@@ -194,7 +196,8 @@ Scope {
         description: "Closes overview"
 
         onPressed: {
-            GlobalStates.overviewOpen = false;
+            GlobalStates.overviewSearchOpen = false;
+            GlobalStates.overviewWindowOpen = false;
         }
     }
     GlobalShortcut {
@@ -210,7 +213,7 @@ Scope {
                 GlobalStates.superReleaseMightTrigger = true;
                 return;
             }
-            GlobalStates.overviewOpen = !GlobalStates.overviewOpen;
+            GlobalStates.overviewWindowsOpen = !GlobalStates.overviewWindowsOpen;
         }
     }
     GlobalShortcut {
