@@ -63,6 +63,7 @@ import Quickshell.Hyprland
                         searchWidget.cancelSearch()
                     }
                     delayedGrabTimer.start()
+                    grab.active = GlobalStates.overviewSearchOpen
                 }
             }
         }
